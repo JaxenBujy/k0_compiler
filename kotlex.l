@@ -23,8 +23,8 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
 /* RULES */
 %%
  /* COMMENT state for multi-line comments */ 
-"/*"    { BEGIN(COMMENT); } /* switch to comment state where nothing will be counted. chars-=2: don't count the comment start */
-<COMMENT>"*/"   {BEGIN(INITIAL); } /* switch back to initial flex state. chars-=2: don't count the comment end. words-=1: don't count comment as a word */
+"/*"    { BEGIN(COMMENT); } /* switch to comment state where nothing will be counted */
+<COMMENT>"*/"   {BEGIN(INITIAL); } /* switch back to initial flex state */
 <COMMENT>(.) {}
 <COMMENT>(\n) {rows++;}
 
@@ -53,7 +53,7 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
 "when"     { return WHEN; }
 "while"   { return WHILE; }
 
- /* Kotline Reserved Keywords that we are not dealing with, return KEYWORD_ERROR (error) */
+ /* Kotline Reserved Keywords that we are not dealing with, return KEYWORD_ERROR */
 "!in"        { return KEYWORD_ERROR; }
 "!is"        { return KEYWORD_ERROR; }
 "as"        { return KEYWORD_ERROR; }

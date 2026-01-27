@@ -899,12 +899,12 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 27 "kotlex.l"
-{ BEGIN(COMMENT); } /* switch to comment state where nothing will be counted. chars-=2: don't count the comment start */
+{ BEGIN(COMMENT); } /* switch to comment state where nothing will be counted */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 28 "kotlex.l"
-{BEGIN(INITIAL); } /* switch back to initial flex state. chars-=2: don't count the comment end. words-=1: don't count comment as a word */
+{BEGIN(INITIAL); } /* switch back to initial flex state */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
@@ -1020,7 +1020,7 @@ YY_RULE_SETUP
 #line 55 "kotlex.l"
 { return WHILE; }
 	YY_BREAK
-/* Kotline Reserved Keywords that we are not dealing with, return KEYWORD_ERROR (error) */
+/* Kotline Reserved Keywords that we are not dealing with, return KEYWORD_ERROR */
 case 25:
 YY_RULE_SETUP
 #line 58 "kotlex.l"
