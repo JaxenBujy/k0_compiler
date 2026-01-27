@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "int_codes.h"
+#include "ytab.h"
 
 extern FILE *yyin;
 extern char *yytext;
 extern int rows;
 int yylex(void);
 
-typedef struct
+struct token
 {
         int category;   /* the integer code returned by yylex */
         char *text;     /* the actual string (lexeme) matched */
@@ -17,15 +17,13 @@ typedef struct
         int ival;       /* for integer constants, store binary value here */
         double dval;    /* for real constants, store binary value here */
         char *sval;     /* for string constants, malloc space, de-escape, store the string (less quotes and after escapes) here */
-} token;
+};
 
-typedef struct
+struct tokenlist
 {
-        token t;
+        struct token *t;
         struct tokenlist *next;
-} tokenlist;
-
-tokenlist *insert_at_head(tokenlist *head, token t, size_t tok_size);
+};
 
 int main(int argc, char *argv[])
 {
@@ -62,7 +60,7 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
-                                token *newTok = (token *)malloc(sizeof(token));
+                                struct token *newTok = (struct token *)malloc(sizeof(struct token));
                                 switch (rv)
                                 {
                                 case INT:
@@ -78,7 +76,6 @@ int main(int argc, char *argv[])
                                         newTok->sval = new_string;
                                 }
                                 size_t data_size = sizeof(newTok);
-                                tokenlist *newToken = insert_at_head(head, newTok, data_size);
                                 printf("%d              %s              %d              %s              Ival/Sval\n", rv, yytext, rows, filename);
                         }
                         rv = yylex();
@@ -87,18 +84,4 @@ int main(int argc, char *argv[])
         }
 
         return 0;
-}
-
-tokenlist *insert_at_head(tokenlist *head, token t, size_t tok_size)
-{
-        tokenlist *newToken = (tokenlist *)malloc(sizeof(tokenlist));
-        if (newToken == NULL)
-        {
-                perror("malloc failed\n");
-                exit(EXIT_FAILURE);
-        }
-        newToken->t = malloc(tok_size);
-        newToken->next = head;
-        memcpy(newToken->t, tok, data_size);
-        return newToken;
 }

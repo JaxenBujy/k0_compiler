@@ -60,8 +60,8 @@
 #define NN_ASSERT 323 // !!
 
 /* Subscript and dot */
-#define INDEX 324 // [ ]
-#define DOT 325   // .
+#define LSQUARE 324 // [
+#define DOT 325     // .
 
 /* Safe call */
 #define SAFE_CALL 326 // ?.

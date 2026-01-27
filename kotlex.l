@@ -4,7 +4,7 @@
 %option noinput
 %option nounput
 %{
-#include "int_codes.h"
+#include "ytab.h"
 int rows = 1;
 %}
 
@@ -87,7 +87,6 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
 "value"        { return KEYWORD_ERROR; }
 "where"        { return KEYWORD_ERROR; }
 
- 
  /* Operators */
 "++"        { return INC; }
 "--"        { return DEC; }
@@ -118,7 +117,6 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
 "!"         { return NOT; }
 "."         { return DOT; }
 "("{basic_type}")"   { return TYPE_CAST; }
-"["         { return INDEX; }
 
  /* Punctuation */
 "("     { return LPAREN; }
@@ -128,6 +126,7 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
 "{"     { return LBRACE; }
 "}"     { return RBRACE; }
 ":"     { return COLON; }
+"["     { return LSQUARE; }
 "]"     { return RSQUARE; }
 
  /* Literals */
