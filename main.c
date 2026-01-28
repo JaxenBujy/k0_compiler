@@ -27,6 +27,8 @@ struct tokenlist
 
 struct token *create_token(int category, char *text, int lineno, char *filename);
 struct tokenlist *insert_at_head(struct tokenlist *head, struct token *t);
+struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t);
+void print_tokens_rev(struct tokenlist *head);
 void print_tokens(struct tokenlist *head);
 void free_list(struct tokenlist *head);
 
@@ -47,6 +49,7 @@ int main(int argc, char *argv[])
         else
         {
                 struct tokenlist *head = NULL;
+                int first_token = 1;
 
                 int rv = yylex();
                 while (rv != 0) // yylex returning 0 indicates EOF
@@ -64,9 +67,19 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
-                                // create token and add it to linked list
                                 struct token *newTok = create_token(rv, yytext, rows, filename);
-                                head = insert_at_head(head, newTok);
+                                if (first_token)
+                                {
+
+                                        head = insert_at_head(head, newTok);
+                                        first_token = 0;
+                                }
+                                else
+                                {
+                                        head = insert_at_tail(head, newTok);
+                                }
+
+                                // create token and add it to linked list
                         }
                         rv = yylex();
                 }
@@ -110,12 +123,28 @@ struct token *create_token(int category, char *text, int lineno, char *filename)
         return newTok;
 }
 
+// insert at head of the linked list
 struct tokenlist *insert_at_head(struct tokenlist *head, struct token *t)
 {
         struct tokenlist *newTokEntry = malloc(sizeof(*newTokEntry));
         newTokEntry->t = t;
         newTokEntry->next = head;
         head = newTokEntry;
+        return head;
+}
+
+// insert at tail of the linked list. Less efficient, but seems to be more useful for the future to have it in order of tokens discovered?
+struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t)
+{
+        struct tokenlist *temp = head;
+        while (temp->next != NULL)
+        {
+                temp = temp->next;
+        }
+        struct tokenlist *newTokEntry = malloc(sizeof(*newTokEntry));
+        temp->next = newTokEntry;
+        newTokEntry->t = t;
+        newTokEntry->next = NULL;
         return head;
 }
 
@@ -129,6 +158,19 @@ void print_tokens(struct tokenlist *head)
         {
                 printf("%d              %s              %d              %s              %d              %f              %s\n", temp->t->category, temp->t->text, temp->t->lineno, temp->t->filename, temp->t->ival, temp->t->dval, temp->t->sval);
                 temp = temp->next;
+        }
+}
+
+void print_tokens_rev(struct tokenlist *temp)
+{
+        if (temp == NULL)
+        {
+                return;
+        }
+        else
+        {
+                print_tokens_rev(temp->next);
+                printf("%d              %s              %d              %s              %d              %f              %s\n", temp->t->category, temp->t->text, temp->t->lineno, temp->t->filename, temp->t->ival, temp->t->dval, temp->t->sval);
         }
 }
 
