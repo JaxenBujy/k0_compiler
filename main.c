@@ -83,6 +83,8 @@ int main(int argc, char *argv[])
                         }
                         rv = yylex();
                 }
+                char *test = "chungs\\tballs\n";
+                printf("%s", test);
                 print_tokens(head);
                 free_list(head);
                 fclose(yyin);
@@ -95,6 +97,10 @@ struct token *create_token(int category, char *text, int lineno, char *filename)
 {
         struct token *newTok = malloc(sizeof(*newTok));
 
+        if (category == STRING)
+        {
+                printf("text: %s", text);
+        }
         // set general fields
         newTok->category = category;
         newTok->text = strdup(text);
@@ -106,7 +112,7 @@ struct token *create_token(int category, char *text, int lineno, char *filename)
         newTok->dval = 0.0;
         newTok->sval = NULL;
 
-        // set specific fields depending on data
+        // set specific literal fields depending on data
         switch (category)
         {
         case INT:

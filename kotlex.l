@@ -14,8 +14,8 @@ single_delim \/\*[^\n]*
 hash_line  \#[^\n]*
 identifier  [a-zA-Z_][a-zA-Z0-9_]*
 basic_type "byte"|"short"|"int"|"long"|"float"|"double"|"boolean"|"string"
-integer_literal  [0-9]+
-float_literal  [0-9]+\.[0-9]+
+integer_literal  [0-9]+[1-9]*|0[xX][0-9A-Fa-f]+
+float_literal  ([0-9]+\.[0-9]*|\.[0-9]+)
 supported_escapes  \\[nt'"r0b$\\]
 string_literal \"([^\\\"\n]|{supported_escapes})*\"
 %x COMMENT
