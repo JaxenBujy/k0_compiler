@@ -16,9 +16,10 @@
 #define WHEN 272
 #define WHILE 273
 
-#define COULD_NOT_MATCH 299
-/* Kotlin reserved keyword not preseent in k0 */
-#define KEYWORD_ERROR 300
+/* Errors */
+#define UNCLOSED_COMMENT 298 // good for catching something like /* world
+#define COULD_NOT_MATCH 299  // general could not match error - good for catching something like "hello
+#define KEYWORD_ERROR 300    // Kotlin reserved keyword not present in k0
 
 /* Assignment operators */
 #define ASSIGN 301       // =
@@ -91,7 +92,7 @@
 
 /* Literals */
 #define INT 340
-#define FLOAT 341
+#define REAL 341
 #define STRING 342
 
 /* Identifiers */

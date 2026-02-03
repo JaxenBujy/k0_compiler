@@ -5,7 +5,8 @@
 
 extern FILE *yyin;
 extern char *yytext;
-extern int rows;
+extern int lineno;
+extern int multi_line_start;
 int yylex(void);
 
 struct token
@@ -31,6 +32,7 @@ struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t);
 void print_tokens_rev(struct tokenlist *head);
 void print_tokens(struct tokenlist *head);
 void free_list(struct tokenlist *head);
+char *consume_sval(char *raw_text);
 
 int main(int argc, char *argv[])
 {
@@ -54,20 +56,19 @@ int main(int argc, char *argv[])
                 int rv = yylex();
                 while (rv != 0) // yylex returning 0 indicates EOF
                 {
-
-                        if (rv == KEYWORD_ERROR) // if yylex returned a non k0 keyword
+                        switch (rv)
                         {
-                                printf("ERROR: %s:%d Kotlin reserved keyword: \"%s\" is not a part of k0, exiting...\n", filename, rows, yytext);
+                        case KEYWORD_ERROR:
+                                printf("%s:%d: scanner error: Kotlin reserved keyword: \"%s\" is not a part of k0\n", filename, lineno, yytext);
                                 exit(1);
-                        }
-                        else if (rv == COULD_NOT_MATCH)
-                        {
-                                printf("ERROR: scanner could not match %s\n", yytext);
+                        case UNCLOSED_COMMENT:
+                                printf("%s:%d: scanner error: unclosed multi-line comment\n", filename, multi_line_start);
                                 exit(1);
-                        }
-                        else
-                        {
-                                struct token *newTok = create_token(rv, yytext, rows, filename);
+                        case COULD_NOT_MATCH:
+                                printf("%s:%d: scanner error: \'%s\' could not be matched\n", filename, lineno, yytext);
+                                exit(1);
+                        default:
+                                struct token *newTok = create_token(rv, yytext, lineno, filename);
                                 if (first_token)
                                 {
 
@@ -78,13 +79,10 @@ int main(int argc, char *argv[])
                                 {
                                         head = insert_at_tail(head, newTok);
                                 }
-
-                                // create token and add it to linked list
                         }
                         rv = yylex();
                 }
-                char *test = "chungs\\tballs\n";
-                printf("%s", test);
+
                 print_tokens(head);
                 free_list(head);
                 fclose(yyin);
@@ -118,12 +116,12 @@ struct token *create_token(int category, char *text, int lineno, char *filename)
         case INT:
                 newTok->ival = atoi(text);
                 break;
-        case FLOAT:
+        case REAL:
                 newTok->dval = atof(text);
                 break;
         case STRING:
-                newTok->sval = (char *)malloc(strlen(text) + 1);
-                strcpy(newTok->sval, text);
+                newTok->sval = consume_sval(text);
+
                 break;
         }
         return newTok;
@@ -193,4 +191,25 @@ void free_list(struct tokenlist *head)
                 free(curr);
                 curr = temp;
         }
+}
+
+char *consume_sval(char *raw_text)
+{
+        char *sval = (char *)malloc(strlen(raw_text) + 1);
+        strcpy(sval, raw_text);
+
+        int escaped = 0; // flag for if an escape has been found
+        while (*raw_text)
+        {
+                if (escaped)
+                        switch (*(raw_text + 1))
+                        {
+                        case 'n':
+                                *raw_text = '\n';
+                        }
+                printf("%c\n", *raw_text);
+                raw_text++;
+        }
+
+        return sval;
 }
