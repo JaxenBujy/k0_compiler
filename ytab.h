@@ -15,8 +15,11 @@
 #define VAR 271
 #define WHEN 272
 #define WHILE 273
+#define IMPORT 274
 
 /* Errors */
+#define OP_ERROR 296         // illegal operator, such as bitwise operations
+#define ILL_IDENT 297        // illegal identifier, such as 12e
 #define UNCLOSED_COMMENT 298 // good for catching something like /* world
 #define COULD_NOT_MATCH 299  // general could not match error - good for catching something like "hello
 #define KEYWORD_ERROR 300    // Kotlin reserved keyword not present in k0

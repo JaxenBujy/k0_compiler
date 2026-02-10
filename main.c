@@ -68,6 +68,8 @@ int main(int argc, char *argv[])
                         case COULD_NOT_MATCH:
                                 printf("%s:%d: scanner error: \'%s\' could not be matched\n", filename, lineno, yytext);
                                 exit(1);
+                        case ILL_IDENT:
+                                printf("%s:%d: scanner error: \'%s\' is an illegal identifier\n", filename, lineno, yytext);
                         default:
                                 struct token *newTok = create_token(rv, lineno, filename);
                                 if (first_token)
@@ -96,10 +98,6 @@ struct token *create_token(int category, int lineno, char *filename)
 {
         struct token *newTok = malloc(sizeof(*newTok));
 
-        if (category == STRING)
-        {
-                printf("text: %s\n", yytext);
-        }
         // set general fields
         newTok->category = category;
         newTok->text = strdup(yytext);
@@ -122,7 +120,11 @@ struct token *create_token(int category, int lineno, char *filename)
                 break;
         case STRING:
                 newTok->sval = consume_sval();
-                printf("sval: %s\n", newTok->sval);
+                if (newTok->sval == NULL)
+                {
+                        printf("%s:%d: scanner error: unsupported escape sequence in %s\n", filename, lineno, yytext);
+                        exit(1);
+                }
                 break;
         }
         return newTok;

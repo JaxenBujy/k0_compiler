@@ -14,6 +14,7 @@ inline_comment  \/\/[^\n]*|\/\*[^\n]\*\/
 single_delim \/\*[^\n]*
 hash_line  \#[^\n]*
 identifier  [a-zA-Z_][a-zA-Z0-9_]*
+illegal_identifier ^[^a-zA-Z_][a-zA-Z0-9_]*
 basic_type "byte"|"short"|"int"|"long"|"float"|"double"|"boolean"|"string"
 integer_literal  [0-9]+[1-9]*|0[xX][0-9A-Fa-f]+
 real_literal  ([0-9]+\.[0-9]*|\.[0-9]+)
@@ -54,6 +55,7 @@ string_literal \"([^\\\"]|\\.)*\"
 "var"      { return VAR; }
 "when"     { return WHEN; }
 "while"   { return WHILE; }
+"import"  { return IMPORT; }
 
  /* Kotline Reserved Keywords that we are not dealing with, return KEYWORD_ERROR */
 "!in"        { return KEYWORD_ERROR; }
@@ -88,6 +90,36 @@ string_literal \"([^\\\"]|\\.)*\"
 "setparam"     { return KEYWORD_ERROR; }
 "value"        { return KEYWORD_ERROR; }
 "where"        { return KEYWORD_ERROR; }
+ /* Kotlin modifier keywords not in k0 */
+"abstract"    { return KEYWORD_ERROR; }
+"actual"      { return KEYWORD_ERROR; }
+"annotation"  { return KEYWORD_ERROR; }
+"companion"   { return KEYWORD_ERROR; }
+"crossinline" { return KEYWORD_ERROR; }
+"data"        { return KEYWORD_ERROR; }
+"enum"        { return KEYWORD_ERROR; }
+"expect"      { return KEYWORD_ERROR; }
+"external"    { return KEYWORD_ERROR; }
+"final"       { return KEYWORD_ERROR; }
+"infix"       { return KEYWORD_ERROR; }
+"inline"      { return KEYWORD_ERROR; }
+"inner"       { return KEYWORD_ERROR; }
+"internal"    { return KEYWORD_ERROR; }
+"lateinit"    { return KEYWORD_ERROR; }
+"noinline"    { return KEYWORD_ERROR; }
+"open"        { return KEYWORD_ERROR; }
+"operator"    { return KEYWORD_ERROR; }
+"out"         { return KEYWORD_ERROR; }
+"private"     { return KEYWORD_ERROR; }
+"protected"   { return KEYWORD_ERROR; }
+"public"      { return KEYWORD_ERROR; }
+"reified"     { return KEYWORD_ERROR; }
+"sealed"      { return KEYWORD_ERROR; }
+"suspend"     { return KEYWORD_ERROR; }
+"tailrec"     { return KEYWORD_ERROR; }
+"vararg"      { return KEYWORD_ERROR; }
+"it"          { return KEYWORD_ERROR; }
+
 
  /* Operators */
 "++"        { return INC; }
@@ -119,6 +151,19 @@ string_literal \"([^\\\"]|\\.)*\"
 "!"         { return NOT; }
 "."         { return DOT; }
 "("{basic_type}")"   { return TYPE_CAST; }
+ /* Operators that produce OP_ERROR */
+"~"    { return OP_ERROR; }
+"<<"   { return OP_ERROR; }
+">>"   { return OP_ERROR; }
+"&="   { return OP_ERROR; }
+"|="   { return OP_ERROR; }
+"^="   { return OP_ERROR; }
+">>="  { return OP_ERROR; }
+"<<="  { return OP_ERROR; }
+"&"    { return OP_ERROR; }
+"|"    { return OP_ERROR; }
+"^"    { return OP_ERROR; }
+
 
  /* Punctuation */
 "("     { return LPAREN; }
@@ -138,12 +183,12 @@ string_literal \"([^\\\"]|\\.)*\"
 
  /* identifier catchall */
 {identifier}    { return IDENT; }
+{illegal_identifier}  { return ILL_IDENT;}
 
  /*Could not match */
  .      { return COULD_NOT_MATCH; }
 
 <<EOF>> {
-    printf("lineno: %d\n", lineno);
     return 0;
 }
 %%
