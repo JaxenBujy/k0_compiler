@@ -5,31 +5,33 @@
 %option nounput
 %{
 #include "ytab.h"
-int rows = 1;
+int lineno = 1; // keep track of line number 
+int multi_line_start; // keep track of when a multi line comment begins to give error if it is unclosed
 %}
 
 whitespace  [ \t\r]+
-inline_comment  \/\/[^\n]*
+inline_comment  \/\/[^\n]*|\/\*[^\n]\*\/
 single_delim \/\*[^\n]*
 hash_line  \#[^\n]*
 identifier  [a-zA-Z_][a-zA-Z0-9_]*
 basic_type "byte"|"short"|"int"|"long"|"float"|"double"|"boolean"|"string"
-integer_literal  [0-9]+
-float_literal  [0-9]+\.[0-9]+
+integer_literal  [0-9]+[1-9]*|0[xX][0-9A-Fa-f]+
+real_literal  ([0-9]+\.[0-9]*|\.[0-9]+)
 supported_escapes  \\[nt'"r0b$\\]
-string_literal \"([^\\\"\n]|{supported_escapes})*\"
+string_literal \"([^\\\"]|\\.)*\"
 %x COMMENT
 
 /* RULES */
 %%
  /* COMMENT state for multi-line comments */ 
-"/*"    { BEGIN(COMMENT); } /* switch to comment state where nothing will be counted */
+"/*"    { BEGIN(COMMENT); multi_line_start = lineno; } /* switch to comment state where nothing will be counted */
 <COMMENT>"*/"   {BEGIN(INITIAL); } /* switch back to initial flex state */
 <COMMENT>(.) {}
-<COMMENT>(\n) {rows++;}
+<COMMENT>(\n) {lineno++;}
+<COMMENT><<EOF>> {return UNCLOSED_COMMENT;}
 
  /* Initial state */
-\n		{ rows++; }
+\n		{ lineno++; }
 {inline_comment}    {}
 {hash_line}  {}
 {whitespace}  {}   
@@ -131,7 +133,7 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
 
  /* Literals */
 {integer_literal}   { return INT; }
-{float_literal}     { return FLOAT; }
+{real_literal}     { return REAL; }
 {string_literal}    { return STRING; }
 
  /* identifier catchall */
@@ -141,7 +143,7 @@ string_literal \"([^\\\"\n]|{supported_escapes})*\"
  .      { return COULD_NOT_MATCH; }
 
 <<EOF>> {
-    printf("rows: %d\n", rows);
+    printf("lineno: %d\n", lineno);
     return 0;
 }
 %%

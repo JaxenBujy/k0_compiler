@@ -5,7 +5,9 @@
 
 extern FILE *yyin;
 extern char *yytext;
-extern int rows;
+extern int yyleng;
+extern int lineno;
+extern int multi_line_start;
 int yylex(void);
 
 struct token
@@ -25,12 +27,13 @@ struct tokenlist
         struct tokenlist *next;
 };
 
-struct token *create_token(int category, char *text, int lineno, char *filename);
+struct token *create_token(int category, int lineno, char *filename);
 struct tokenlist *insert_at_head(struct tokenlist *head, struct token *t);
 struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t);
 void print_tokens_rev(struct tokenlist *head);
 void print_tokens(struct tokenlist *head);
 void free_list(struct tokenlist *head);
+char *consume_sval();
 
 int main(int argc, char *argv[])
 {
@@ -54,20 +57,19 @@ int main(int argc, char *argv[])
                 int rv = yylex();
                 while (rv != 0) // yylex returning 0 indicates EOF
                 {
-
-                        if (rv == KEYWORD_ERROR) // if yylex returned a non k0 keyword
+                        switch (rv)
                         {
-                                printf("ERROR: %s:%d Kotlin reserved keyword: \"%s\" is not a part of k0, exiting...\n", filename, rows, yytext);
+                        case KEYWORD_ERROR:
+                                printf("%s:%d: scanner error: Kotlin reserved keyword: \"%s\" is not a part of k0\n", filename, lineno, yytext);
                                 exit(1);
-                        }
-                        else if (rv == COULD_NOT_MATCH)
-                        {
-                                printf("ERROR: scanner could not match %s\n", yytext);
+                        case UNCLOSED_COMMENT:
+                                printf("%s:%d: scanner error: unclosed multi-line comment\n", filename, multi_line_start);
                                 exit(1);
-                        }
-                        else
-                        {
-                                struct token *newTok = create_token(rv, yytext, rows, filename);
+                        case COULD_NOT_MATCH:
+                                printf("%s:%d: scanner error: \'%s\' could not be matched\n", filename, lineno, yytext);
+                                exit(1);
+                        default:
+                                struct token *newTok = create_token(rv, lineno, filename);
                                 if (first_token)
                                 {
 
@@ -78,11 +80,10 @@ int main(int argc, char *argv[])
                                 {
                                         head = insert_at_tail(head, newTok);
                                 }
-
-                                // create token and add it to linked list
                         }
                         rv = yylex();
                 }
+
                 print_tokens(head);
                 free_list(head);
                 fclose(yyin);
@@ -91,13 +92,17 @@ int main(int argc, char *argv[])
         return 0;
 }
 
-struct token *create_token(int category, char *text, int lineno, char *filename)
+struct token *create_token(int category, int lineno, char *filename)
 {
         struct token *newTok = malloc(sizeof(*newTok));
 
+        if (category == STRING)
+        {
+                printf("text: %s\n", yytext);
+        }
         // set general fields
         newTok->category = category;
-        newTok->text = strdup(text);
+        newTok->text = strdup(yytext);
         newTok->lineno = lineno;
         newTok->filename = strdup(filename);
 
@@ -106,18 +111,18 @@ struct token *create_token(int category, char *text, int lineno, char *filename)
         newTok->dval = 0.0;
         newTok->sval = NULL;
 
-        // set specific fields depending on data
+        // set specific literal fields depending on data
         switch (category)
         {
         case INT:
-                newTok->ival = atoi(text);
+                newTok->ival = atoi(yytext);
                 break;
-        case FLOAT:
-                newTok->dval = atof(text);
+        case REAL:
+                newTok->dval = atof(yytext);
                 break;
         case STRING:
-                newTok->sval = (char *)malloc(strlen(text) + 1);
-                strcpy(newTok->sval, text);
+                newTok->sval = consume_sval();
+                printf("sval: %s\n", newTok->sval);
                 break;
         }
         return newTok;
@@ -187,4 +192,68 @@ void free_list(struct tokenlist *head)
                 free(curr);
                 curr = temp;
         }
+}
+
+char *consume_sval(void)
+{
+        // allocate worst-case size (raw string length including escapes and quotes)
+        char *tmp = (char *)malloc(yyleng);
+        char *start = tmp;
+
+        // pointer to iterate over the raw lexer text
+        char *raw_text = yytext + 1;     // skip initial quote
+        char *end = yytext + yyleng - 1; // stop before final quote
+
+        // iterate through raw text, consuming escapes and copying characters
+        while (raw_text < end)
+        {
+                // encountered a backslash, meaning an escape sequence
+                if (*raw_text == '\\')
+                {
+                        raw_text++; // move to escaped character
+
+                        // check what the escaped character is
+                        switch (*raw_text)
+                        {
+                        case 'n': // consume newline
+                                *tmp = '\n';
+                                break;
+                        case 't': // consume tab
+                                *tmp = '\t';
+                                break;
+                        case '\\': // consume literal backslash
+                                *tmp = '\\';
+                                break;
+                        case '\'': // consume apostrophe
+                                *tmp = '\'';
+                                break;
+                        case '\"': // consume quote
+                                *tmp = '\"';
+                                break;
+                        case 'r': // consume carriage return
+                                *tmp = '\r';
+                                break;
+                        case 'b': // consume backspace
+                                *tmp = '\b';
+                                break;
+                        default:
+                                // unsupported escape sequence
+                                free(start);
+                                return NULL;
+                        }
+                }
+                else
+                {
+                        // regular character, copy as-is
+                        *tmp = *raw_text;
+                }
+
+                tmp++;
+                raw_text++;
+        }
+
+        // null-terminate the final string value
+        *tmp = '\0';
+
+        return start;
 }
