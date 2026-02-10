@@ -5,6 +5,7 @@
 
 extern FILE *yyin;
 extern char *yytext;
+extern int yyleng;
 extern int lineno;
 extern int multi_line_start;
 int yylex(void);
@@ -26,13 +27,13 @@ struct tokenlist
         struct tokenlist *next;
 };
 
-struct token *create_token(int category, char *text, int lineno, char *filename);
+struct token *create_token(int category, int lineno, char *filename);
 struct tokenlist *insert_at_head(struct tokenlist *head, struct token *t);
 struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t);
 void print_tokens_rev(struct tokenlist *head);
 void print_tokens(struct tokenlist *head);
 void free_list(struct tokenlist *head);
-char *consume_sval(char *raw_text);
+char *consume_sval();
 
 int main(int argc, char *argv[])
 {
@@ -68,7 +69,7 @@ int main(int argc, char *argv[])
                                 printf("%s:%d: scanner error: \'%s\' could not be matched\n", filename, lineno, yytext);
                                 exit(1);
                         default:
-                                struct token *newTok = create_token(rv, yytext, lineno, filename);
+                                struct token *newTok = create_token(rv, lineno, filename);
                                 if (first_token)
                                 {
 
@@ -91,17 +92,17 @@ int main(int argc, char *argv[])
         return 0;
 }
 
-struct token *create_token(int category, char *text, int lineno, char *filename)
+struct token *create_token(int category, int lineno, char *filename)
 {
         struct token *newTok = malloc(sizeof(*newTok));
 
         if (category == STRING)
         {
-                printf("text: %s", text);
+                printf("text: %s\n", yytext);
         }
         // set general fields
         newTok->category = category;
-        newTok->text = strdup(text);
+        newTok->text = strdup(yytext);
         newTok->lineno = lineno;
         newTok->filename = strdup(filename);
 
@@ -114,14 +115,14 @@ struct token *create_token(int category, char *text, int lineno, char *filename)
         switch (category)
         {
         case INT:
-                newTok->ival = atoi(text);
+                newTok->ival = atoi(yytext);
                 break;
         case REAL:
-                newTok->dval = atof(text);
+                newTok->dval = atof(yytext);
                 break;
         case STRING:
-                newTok->sval = consume_sval(text);
-
+                newTok->sval = consume_sval();
+                printf("sval: %s\n", newTok->sval);
                 break;
         }
         return newTok;
@@ -193,23 +194,66 @@ void free_list(struct tokenlist *head)
         }
 }
 
-char *consume_sval(char *raw_text)
+char *consume_sval(void)
 {
-        char *sval = (char *)malloc(strlen(raw_text) + 1);
-        strcpy(sval, raw_text);
+        // allocate worst-case size (raw string length including escapes and quotes)
+        char *tmp = (char *)malloc(yyleng);
+        char *start = tmp;
 
-        int escaped = 0; // flag for if an escape has been found
-        while (*raw_text)
+        // pointer to iterate over the raw lexer text
+        char *raw_text = yytext + 1;     // skip initial quote
+        char *end = yytext + yyleng - 1; // stop before final quote
+
+        // iterate through raw text, consuming escapes and copying characters
+        while (raw_text < end)
         {
-                if (escaped)
-                        switch (*(raw_text + 1))
+                // encountered a backslash, meaning an escape sequence
+                if (*raw_text == '\\')
+                {
+                        raw_text++; // move to escaped character
+
+                        // check what the escaped character is
+                        switch (*raw_text)
                         {
-                        case 'n':
-                                *raw_text = '\n';
+                        case 'n': // consume newline
+                                *tmp = '\n';
+                                break;
+                        case 't': // consume tab
+                                *tmp = '\t';
+                                break;
+                        case '\\': // consume literal backslash
+                                *tmp = '\\';
+                                break;
+                        case '\'': // consume apostrophe
+                                *tmp = '\'';
+                                break;
+                        case '\"': // consume quote
+                                *tmp = '\"';
+                                break;
+                        case 'r': // consume carriage return
+                                *tmp = '\r';
+                                break;
+                        case 'b': // consume backspace
+                                *tmp = '\b';
+                                break;
+                        default:
+                                // unsupported escape sequence
+                                free(start);
+                                return NULL;
                         }
-                printf("%c\n", *raw_text);
+                }
+                else
+                {
+                        // regular character, copy as-is
+                        *tmp = *raw_text;
+                }
+
+                tmp++;
                 raw_text++;
         }
 
-        return sval;
+        // null-terminate the final string value
+        *tmp = '\0';
+
+        return start;
 }
