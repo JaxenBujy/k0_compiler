@@ -1,6 +1,8 @@
 // Hello World Program
 e1e12 = 5
-"hello
+"""multi
+line 
+string"""
 fun main(args : Array<String>) {
-    println("hello\tworld")
+    println("hello\\\\tworld")
 }

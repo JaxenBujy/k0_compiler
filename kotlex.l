@@ -19,7 +19,8 @@ basic_type "byte"|"short"|"int"|"long"|"float"|"double"|"boolean"|"string"
 integer_literal  [0-9]+[1-9]*|0[xX][0-9A-Fa-f]+
 real_literal  ([0-9]+\.[0-9]*|\.[0-9]+)
 supported_escapes  \\[nt'"r0b$\\]
-string_literal \"([^\\\"]|\\.)*\"
+string_literal \"([^\\\"\n]|\\.)*\"
+multi_string_literal \"\"\"([^\\\"]|\\.)*\"\"\"
 %x COMMENT
 
 /* RULES */
@@ -180,6 +181,7 @@ string_literal \"([^\\\"]|\\.)*\"
 {integer_literal}   { return INT; }
 {real_literal}     { return REAL; }
 {string_literal}    { return STRING; }
+{multi_string_literal}  { return MULTI_STRING; }
 
  /* identifier catchall */
 {identifier}    { return IDENT; }

@@ -33,7 +33,7 @@ struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t);
 void print_tokens_rev(struct tokenlist *head);
 void print_tokens(struct tokenlist *head);
 void free_list(struct tokenlist *head);
-char *consume_sval();
+char *consume_sval(int str_type);
 
 int main(int argc, char *argv[])
 {
@@ -119,7 +119,15 @@ struct token *create_token(int category, int lineno, char *filename)
                 newTok->dval = atof(yytext);
                 break;
         case STRING:
-                newTok->sval = consume_sval();
+                newTok->sval = consume_sval(STRING);
+                if (newTok->sval == NULL)
+                {
+                        printf("%s:%d: scanner error: unsupported escape sequence in %s\n", filename, lineno, yytext);
+                        exit(1);
+                }
+                break;
+        case MULTI_STRING:
+                newTok->sval = consume_sval(MULTI_STRING);
                 if (newTok->sval == NULL)
                 {
                         printf("%s:%d: scanner error: unsupported escape sequence in %s\n", filename, lineno, yytext);
@@ -129,7 +137,6 @@ struct token *create_token(int category, int lineno, char *filename)
         }
         return newTok;
 }
-
 // insert at head of the linked list
 struct tokenlist *insert_at_head(struct tokenlist *head, struct token *t)
 {
@@ -158,11 +165,12 @@ struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t)
 void print_tokens(struct tokenlist *head)
 {
         struct tokenlist *temp = head;
-        printf("Category                Text            Line Number             Filename                Ival            Dval            Sval\n");
+        printf("Category    Text                Line Number     Filename   Ival       Dval      Sval\n");
         printf("---------------------------------------------------------------------------------------------------------------------------------\n");
 
         while (temp != NULL)
         {
+                printf("%d    ", temp->t->category);
                 printf("%d              %s              %d              %s              %d              %f              %s\n", temp->t->category, temp->t->text, temp->t->lineno, temp->t->filename, temp->t->ival, temp->t->dval, temp->t->sval);
                 temp = temp->next;
         }
@@ -196,7 +204,7 @@ void free_list(struct tokenlist *head)
         }
 }
 
-char *consume_sval(void)
+char *consume_sval(int str_type)
 {
         // allocate worst-case size (raw string length including escapes and quotes)
         char *tmp = (char *)malloc(yyleng);
@@ -205,6 +213,12 @@ char *consume_sval(void)
         // pointer to iterate over the raw lexer text
         char *raw_text = yytext + 1;     // skip initial quote
         char *end = yytext + yyleng - 1; // stop before final quote
+
+        if (str_type == MULTI_STRING)
+        {
+                raw_text = yytext + 3;
+                end = yytext + yyleng - 3;
+        }
 
         // iterate through raw text, consuming escapes and copying characters
         while (raw_text < end)
