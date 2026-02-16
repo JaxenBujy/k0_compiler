@@ -70,6 +70,10 @@ int main(int argc, char *argv[])
                                 exit(1);
                         case ILL_IDENT:
                                 printf("%s:%d: scanner error: \'%s\' is an illegal identifier\n", filename, lineno, yytext);
+                                exit(1);
+                        case OP_ERROR:
+                                printf("%s:%d: scanner error: \'%s\' is an illegal operator\n", filename, lineno, yytext);
+                                exit(1);
                         default:
                                 struct token *newTok = create_token(rv, lineno, filename);
                                 if (first_token)
@@ -164,28 +168,24 @@ struct tokenlist *insert_at_tail(struct tokenlist *head, struct token *t)
 
 void print_tokens(struct tokenlist *head)
 {
-        struct tokenlist *temp = head;
-        printf("Category    Text                Line Number     Filename   Ival       Dval      Sval\n");
-        printf("---------------------------------------------------------------------------------------------------------------------------------\n");
+        struct tokenlist *curr = head;
 
-        while (temp != NULL)
-        {
-                printf("%d    ", temp->t->category);
-                printf("%d              %s              %d              %s              %d              %f              %s\n", temp->t->category, temp->t->text, temp->t->lineno, temp->t->filename, temp->t->ival, temp->t->dval, temp->t->sval);
-                temp = temp->next;
-        }
-}
+        printf("%-10s %-20s %-12s %-15s %-10s %-12s %-20s\n",
+               "Category", "Text", "Line", "Filename", "Ival", "Dval", "Sval");
+        printf("-----------------------------------------------------------------------------------------------\n");
 
-void print_tokens_rev(struct tokenlist *temp)
-{
-        if (temp == NULL)
+        while (curr != NULL)
         {
-                return;
-        }
-        else
-        {
-                print_tokens_rev(temp->next);
-                printf("%d              %s              %d              %s              %d              %f              %s\n", temp->t->category, temp->t->text, temp->t->lineno, temp->t->filename, temp->t->ival, temp->t->dval, temp->t->sval);
+                printf("%-10d %-20.20s %-12d %-15.15s %-10d %-12.5f %-20.20s\n",
+                       curr->t->category,
+                       curr->t->text,
+                       curr->t->lineno,
+                       curr->t->filename,
+                       curr->t->ival,
+                       curr->t->dval,
+                       curr->t->sval);
+
+                curr = curr->next;
         }
 }
 

@@ -1,4 +1,4 @@
 #!/bin/bash
 make clean
 make
-./scanner test1.kt
+./scanner test_program1.kt

@@ -98,6 +98,7 @@
 #define REAL 341
 #define STRING 342
 #define MULTI_STRING 343 // multi line string
+#define CHAR 344
 
 /* Identifiers */
-#define IDENT 344
+#define IDENT 345

@@ -1,6 +1,5 @@
 #shebang to be ignored
 // inline comment \n \r
-@
 fun main() {
     val numbers = listOf(1.54, 2, 0.3, 04, 5)
     var sum = 0

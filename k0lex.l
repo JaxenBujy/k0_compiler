@@ -14,12 +14,12 @@ inline_comment  \/\/[^\n]*|\/\*[^\n]\*\/
 single_delim \/\*[^\n]*
 hash_line  \#[^\n]*
 identifier  [a-zA-Z_][a-zA-Z0-9_]*
-illegal_identifier ^[^a-zA-Z_][a-zA-Z0-9_]*
+illegal_identifier [0-9]+[a-zA-Z_][a-zA-Z0-9_]*
 basic_type "byte"|"short"|"int"|"long"|"float"|"double"|"boolean"|"string"
 integer_literal  [0-9]+[1-9]*|0[xX][0-9A-Fa-f]+
 real_literal  ([0-9]+\.[0-9]*|\.[0-9]+)
-supported_escapes  \\[nt'"r0b$\\]
 string_literal \"([^\\\"\n]|\\.)*\"
+char_literal \'(\\[ntr0b\'\"\\\$]|[^\'\\])\'
 multi_string_literal \"\"\"([^\\\"]|\\.)*\"\"\"
 %x COMMENT
 
@@ -178,6 +178,7 @@ multi_string_literal \"\"\"([^\\\"]|\\.)*\"\"\"
 "]"     { return RSQUARE; }
 
  /* Literals */
+{char_literal}  { return CHAR; }
 {integer_literal}   { return INT; }
 {real_literal}     { return REAL; }
 {string_literal}    { return STRING; }
@@ -187,8 +188,8 @@ multi_string_literal \"\"\"([^\\\"]|\\.)*\"\"\"
 {identifier}    { return IDENT; }
 {illegal_identifier}  { return ILL_IDENT;}
 
- /*Could not match */
- .      { return COULD_NOT_MATCH; }
+ /* Could not match */
+.      { return COULD_NOT_MATCH; }
 
 <<EOF>> {
     return 0;
